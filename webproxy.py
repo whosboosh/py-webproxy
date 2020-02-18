@@ -35,8 +35,8 @@ class WebProxy:
         # Try to open cache, if exists use that, otherwise fetch new data
         try:
             print("Attepting to open from cache: '"+cache+"'")
-            file = open("captive.apple.com/index.html","r")
-            response = file.read().encode()
+            file = open("captive.apple.com/index.html","rb")
+            response = file.read()
             file.close()             
         except:
             print("No cache found for: '"+cache+"'. Creating...")
@@ -44,7 +44,7 @@ class WebProxy:
                 os.mkdir(requestName) # Try to create folder for site
             except:
                 print("Folder already exists: "+requestName+". Creating cache file for "+fileToServe+".html")
-            cacheFile = open(cache, "w") # Create the file
+            cacheFile = open(cache, "wb") # Create the file
 
             # Use temporary socket to get data from host
             tempSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -54,7 +54,8 @@ class WebProxy:
             #if requestMethod == "GET":
 
             response = tempSocket.recv(1024) # Get data from host
-            cacheFile.write(response.decode())
+
+            cacheFile.write(response)
 
         client.send(response) # Send data back to client
         client.close() # Close socket connection
