@@ -14,28 +14,51 @@ class WebProxy:
         data = client.recv(1024).decode()
 
         # Get hostname from request
-        requestName = data.split(' ')[1].split("http://")[1]
-
-        # Get the file requested from host
-        fileToServe = requestName.split("/")[1]
+        try:
+            requestName = data.split(' ')[1].split("http://")[1]
+        except:
+            print("Only http requests can be made")
+            client.close()
+            return
 
         # Remove trailing / on hostname
         if (requestName[len(requestName)-1] == "/"):
             requestName = requestName[:-1]
-            fileToServe = "index" # If base requested, set to empty
-        
+
+        # Get port from host
+        try:
+            requestPort = requestName.split(":")[1].split("/")[0]
+        except:
+            requestPort = 80
+
+        # Get the file requested from host
+        # Check if on base directory, if so make file requested simply 'index.html'
+        try:
+            fileToServe = requestName.split("/")[1]
+        except:
+            fileToServe = "index.html"
+
+        # Remove the file ending, just the hostname and/or port
+        host = requestName.split("/")[0]
+        # Remove port from host
+        requestName = host.split(":")[0]
+
+        print(requestName)
+
         # Convert to IP
         requestAddress = socket.gethostbyname(requestName)
         requestMethod = data.split(' ')[0]
-
+        
         print("Method: {requestMethod}".format(requestMethod=requestMethod))
         print("Host: {requestName} - ({requestAddress})".format(requestName=requestName, requestAddress=requestAddress))
+        print("Port: {port}".format(port=requestPort))
+        print("File: {file}".format(file=fileToServe))
         
         cache = requestName+"/"+fileToServe+".html"
         # Try to open cache, if exists use that, otherwise fetch new data
         try:
             print("Attepting to open from cache: '"+cache+"'")
-            file = open("captive.apple.com/index.html","rb")
+            file = open(cache,"rb")
             response = file.read()
             file.close()             
         except:
@@ -48,10 +71,8 @@ class WebProxy:
 
             # Use temporary socket to get data from host
             tempSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            tempSocket.connect((requestAddress, 80)) # Connect to requested host
+            tempSocket.connect((requestAddress, int(requestPort))) # Connect to requested host
             tempSocket.sendall(data.encode()) # Forward data from client to host
-
-            #if requestMethod == "GET":
 
             response = tempSocket.recv(1024) # Get data from host
 
@@ -82,5 +103,5 @@ class WebProxy:
             # Create a thread for this connection
             threading.Thread(target=self.handleRequest, args=(client, address)).start()
 
-proxy = WebProxy("localhost", 3001)
+proxy = WebProxy("localhost", 3002)
 proxy.startProxy()
