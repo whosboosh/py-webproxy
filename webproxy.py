@@ -34,7 +34,7 @@ class WebProxy:
         # Get the file requested from host
         # Check if on base directory, if so make file requested simply 'index.html'
         try:
-            fileToServe = requestName.split("/")[1]
+            fileToServe = requestName.split("/")[1]+".html"
         except:
             fileToServe = "index.html"
 
@@ -54,7 +54,7 @@ class WebProxy:
         print("Port: {port}".format(port=requestPort))
         print("File: {file}".format(file=fileToServe))
         
-        cache = requestName+"/"+fileToServe+".html"
+        cache = requestName+"/"+fileToServe
         # Try to open cache, if exists use that, otherwise fetch new data
         try:
             print("Attepting to open from cache: '"+cache+"'")
@@ -66,7 +66,7 @@ class WebProxy:
             try:
                 os.mkdir(requestName) # Try to create folder for site
             except:
-                print("Folder already exists: "+requestName+". Creating cache file for "+fileToServe+".html")
+                print("Folder already exists: "+requestName+". Creating cache file for "+fileToServe)
             cacheFile = open(cache, "wb") # Create the file
 
             # Use temporary socket to get data from host
