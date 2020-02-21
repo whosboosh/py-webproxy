@@ -58,32 +58,42 @@ class WebProxy:
         print("Port: {port}".format(port=requestPort))
         print("File: {file}".format(file=fileToServe))
         
-        cache = requestName+"/"+fileToServe
-        # Try to open cache, if exists use that, otherwise fetch new data
-        try:
-            print("Attepting to open from cache: '"+cache+"'")
-            file = open(cache,"rb")
-            response = file.read()
-            file.close()             
-        except:
-            print("No cache found for: '"+cache+"'. Creating...")
+        if requestMethod == "GET":
+            cache = requestName+"/"+fileToServe
+            # Try to open cache, if exists use that, otherwise fetch new data
             try:
-                os.mkdir(requestName) # Try to create folder for site
+                print("Attepting to open from cache: '"+cache+"'")
+                file = open(cache,"rb")
+                response = file.read()
+                file.close()             
             except:
-                print("Folder already exists: "+requestName+". Creating cache file for "+fileToServe)
-            cacheFile = open(cache, "wb") # Create the file
+                print("No cache found for: '"+cache+"'. Creating...")
+                try:
+                    os.mkdir(requestName) # Try to create folder for site
+                except:
+                    print("Folder already exists: "+requestName+". Creating cache file for "+fileToServe)
+                cacheFile = open(cache, "wb") # Create the file
 
-            # Use temporary socket to get data from host
-            tempSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            tempSocket.connect((requestAddress, int(requestPort))) # Connect to requested host
-            tempSocket.sendall(data.encode()) # Forward data from client to host
+                # Get data from website
+                response = self.getContent(requestAddress, requestPort, data)
 
-            response = tempSocket.recv(1024) # Get data from host
-
-            cacheFile.write(response)
+                cacheFile.write(response)
+        else:
+            # If request is not GET, just get the data from website
+            response = self.getContent(requestAddress, requestPort, data)
 
         client.send(response) # Send data back to client
         client.close() # Close socket connection
+
+    def getContent(self, requestAddress, requestPort, data):
+        # Use temporary socket to get data from host
+        tempSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tempSocket.connect((requestAddress, int(requestPort))) # Connect to requested host
+        tempSocket.sendall(data.encode()) # Forward data from client to host
+
+        response = tempSocket.recv(4096) # Get data from host
+
+        return response
 
     def startProxy(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Create socket object
