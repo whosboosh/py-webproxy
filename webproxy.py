@@ -34,9 +34,13 @@ class WebProxy:
         # Get the file requested from host
         # Check if on base directory, if so make file requested simply 'index.html'
         try:
-            fileToServe = requestName.split("/")[1]+".html"
+            fileToServe = requestName.split("/")[1]
         except:
             fileToServe = "index.html"
+
+        # If file doesn't have .html ending, add it
+        if fileToServe[-5:] != ".html":
+            fileToServe+=".html"
 
         # Remove the file ending, just the hostname and/or port
         host = requestName.split("/")[0]
