@@ -1,6 +1,7 @@
 import socket
 import os
 import threading
+import select
 
 class WebProxy:
 
@@ -47,8 +48,6 @@ class WebProxy:
         # Remove port from host
         requestName = host.split(":")[0]
 
-        print(requestName)
-
         # Convert to IP
         requestAddress = socket.gethostbyname(requestName)
         requestMethod = data.split(' ')[0]
@@ -91,7 +90,17 @@ class WebProxy:
         tempSocket.connect((requestAddress, int(requestPort))) # Connect to requested host
         tempSocket.sendall(data.encode()) # Forward data from client to host
 
-        response = tempSocket.recv(4096) # Get data from host
+        tempSocket.settimeout(0.5)
+
+        response = "".encode()
+        while True:
+            ready = select.select([tempSocket], [], [], 0.5)
+
+            if ready[0] == []:
+                break
+            print(ready)
+
+            response+=tempSocket.recv(1024) # Get data from host
 
         return response
 
@@ -112,10 +121,10 @@ class WebProxy:
         while True:
             print("Waiting for connections...")
             (client, address) = self.server.accept()
-            client.settimeout(60) # 60s timeout
+            client.settimeout(1) # 1s timeout
             print("Received connection from {addr}".format(addr=address))
             # Create a thread for this connection
             threading.Thread(target=self.handleRequest, args=(client, address)).start()
 
-proxy = WebProxy("localhost", 3002)
+proxy = WebProxy("localhost", 3001)
 proxy.startProxy()
